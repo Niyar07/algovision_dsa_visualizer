@@ -1,16 +1,41 @@
-# algovision_dsa_visualizer
+# 🌳 AlgoVision – DSA Visualizer
 
-A new Flutter project.
+AlgoVision is a Flutter-based mobile application that helps users **visualize fundamental Data Structures and Algorithms (DSA)** through interactive animations. It’s built to simplify learning for beginners and enhance understanding through hands-on interaction.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🔍 Features
 
-A few resources to get you started if this is your first Flutter project:
+- ✅ **Tree Traversal Visualization**
+  - Supports Inorder, Preorder, and Postorder traversals
+  - Displays traversal results using animated chips
+- 🧾 User-friendly input for tree nodes (comma-separated)
+- 🎯 Real-time Tree Building & Traversal Execution
+- 💡 Educational and intuitive layout
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📱 Demo
+
+> Add screenshots or a screen recording here to show app usage  
+> Example:  
+![Demo](screenshots/demo.gif)
+
+---
+
+## 🛠️ Built With
+
+- **Flutter** – For cross-platform UI development
+- **Dart** – Programming language for app logic
+
+---
+
+## 🚀 Getting Started
+
+To run the project locally:
+
+```bash
+git clone https://github.com/yourusername/algovision_dsa_visualizer.git
+cd algovision_dsa_visualizer
+flutter pub get
+flutter run
