@@ -9,19 +9,19 @@ class OnboardingScreen extends StatelessWidget {
         children: [
           _buildPage(
             context,
-            "assets/welcome.svg",
+            'assets/welcome.png ',
             "Welcome to DSA Visualizer",
             "Understand data structures like never before!",
           ),
           _buildPage(
             context,
-            "assets/learn.svg",
+            'assets/learn.png',
             "Learn & Interact",
             "Practice with live animations and code.",
           ),
           _buildPage(
             context,
-            "assets/start.svg",
+            'assets/start.svg',
             "Let’s Get Started!",
             "Login to begin your DSA journey.",
             showButton: true,
@@ -32,7 +32,7 @@ class OnboardingScreen extends StatelessWidget {
   }
 
   Widget _buildPage(
-      BuildContext context, String image, String title, String subtitle,
+      BuildContext context, String imagePath, String title, String subtitle,
       {bool showButton = false}) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -40,7 +40,7 @@ class OnboardingScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            child: Image.asset(image),
+            child: Image.asset(imagePath),
           ),
           Text(
             title,

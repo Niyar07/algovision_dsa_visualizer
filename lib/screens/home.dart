@@ -1,4 +1,3 @@
-// 📄 home.dart
 import 'package:flutter/material.dart';
 import 'data_structure_detail.dart';
 import 'algorithm_detail.dart';
@@ -8,11 +7,24 @@ import 'settings.dart';
 
 class HomeScreen extends StatelessWidget {
   final List<_HomeOption> options = [
-    _HomeOption('Data Structures', Icons.storage, DataStructureDetailScreen()),
-    _HomeOption('Algorithms', Icons.code, AlgorithmDetailScreen()),
-    _HomeOption('Practice Problems', Icons.assignment, PracticeProblemScreen()),
-    _HomeOption('Leaderboard', Icons.leaderboard, LeaderboardScreen()),
-    _HomeOption('Settings', Icons.settings, SettingsScreen()),
+    _HomeOption(
+      title: 'Data Structures',
+      icon: Icons.storage,
+      destination: DataStructureDetailScreen(),
+      backgroundImage: Image.asset('assets/DSA.png', fit: BoxFit.cover),
+    ),
+    _HomeOption(
+      title: 'Algorithms',
+      icon: Icons.code,
+      destination: AlgorithmDetailScreen(),
+      backgroundImage: Image.asset('assets/Algorithms.png', fit: BoxFit.cover),
+    ),
+    _HomeOption(
+      title: 'Settings',
+      icon: Icons.settings,
+      destination: SettingsScreen(),
+      backgroundImage: Image.asset('assets/Settings.png', fit: BoxFit.cover),
+    ),
   ];
 
   @override
@@ -46,17 +58,35 @@ class HomeScreen extends StatelessWidget {
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 4,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(option.icon,
-                  size: 48, color: Theme.of(context).primaryColor),
-              SizedBox(height: 16),
-              Text(option.title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-            ],
-          ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.3),
+                BlendMode.darken,
+              ),
+              child: option.backgroundImage,
+            ),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(option.icon, size: 48, color: Colors.white),
+                  SizedBox(height: 16),
+                  Text(
+                    option.title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -67,6 +97,12 @@ class _HomeOption {
   final String title;
   final IconData icon;
   final Widget destination;
+  final Image backgroundImage;
 
-  _HomeOption(this.title, this.icon, this.destination);
+  _HomeOption({
+    required this.title,
+    required this.icon,
+    required this.destination,
+    required this.backgroundImage,
+  });
 }

@@ -1,4 +1,4 @@
-// 📁 data_structure_detail.dart
+//  data_structure_detail.dart
 
 import 'package:flutter/material.dart';
 
@@ -21,6 +21,15 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
   ];
 
   String selectedStructure = 'Array';
+  // String selectedStructure1 = 'Stack';
+
+  // String selectedStructure2 = 'Queue';
+  // String selectedStructure3 = 'Linked List';
+  // String selectedStructure4 = 'Tree';
+  // // String selectedStructure4 = 'Tree';
+  // String selectedStructure5 = 'Graph';
+  // String selectedStructure6 = 'Hash Table';
+  // String selectedStructure7 = 'Heap';
   final _inputController = TextEditingController();
   final _indexController = TextEditingController();
 
@@ -98,6 +107,18 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
 
   void _linkedListDelete() {
     if (linkedList.isNotEmpty) setState(() => linkedList.removeLast());
+  }
+
+  void _linkedListInsertAt(int index, String value) {
+    if (index < 0 || index > linkedList.length || value.isEmpty) return;
+    setState(() => linkedList.insert(index, value));
+    _clearControllers();
+  }
+
+  void _linkedListDeleteAt(int index) {
+    if (index < 0 || index >= linkedList.length) return;
+    setState(() => linkedList.removeAt(index));
+    _clearControllers();
   }
 
   // ------------------ TREE ------------------
@@ -236,7 +257,7 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
       case 'Stack':
         return _buildBoxedList(stack, reverse: true);
       case 'Queue':
-        return _buildBoxedList(queue);
+        return _buildBoxedList(queue, horizontal: true);
       case 'Linked List':
         return _buildBoxedList(linkedList, horizontal: true, arrow: true);
       case 'Tree':
@@ -263,6 +284,7 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
                 color: Colors.grey[200],
+                // color: Colors.amber[100],
                 borderRadius: BorderRadius.circular(8)),
             child: hashTable.isEmpty
                 ? Center(child: Text('Hash Table is empty'))
@@ -306,13 +328,11 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
       case 'Array':
         return _arrayControls();
       case 'Stack':
-        return _wrapButtons(['Push', 'Pop'], [_stackPush, _stackPop]);
+        return _stackControls();
       case 'Queue':
-        return _wrapButtons(
-            ['Enqueue', 'Dequeue'], [_queueEnqueue, _queueDequeue]);
+        return _queueControls();
       case 'Linked List':
-        return _wrapButtons(
-            ['Add Node', 'Delete Last'], [_linkedListAdd, _linkedListDelete]);
+        return _linkedListControls();
       case 'Tree':
         return _wrapButtons(['Add Node'], [_treeAdd]);
       case 'Graph':
@@ -373,12 +393,63 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
     );
   }
 
+  Widget _singleInput(String label1) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextField(
+        controller: _inputController,
+        decoration: InputDecoration(
+          labelText: label1,
+          border: OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
   Widget _arrayControls() {
     return Column(
       children: [
         _doubleInput('Value', 'Index'),
         _wrapButtons(['Push Back', 'Insert At', 'Delete At', 'Update At'],
             [_arrayPushBack, _arrayInsertAt, _arrayDeleteAt, _arrayUpdateAt]),
+      ],
+    );
+  }
+
+  Widget _stackControls() {
+    return Column(
+      children: [
+        _singleInput('Value'),
+        _wrapButtons(['Push', 'Pop'], [_stackPush, _stackPop]),
+      ],
+    );
+  }
+
+  Widget _queueControls() {
+    return Column(
+      children: [
+        _singleInput('Value'),
+        _wrapButtons(['Enqueue', 'Dequeue'], [_queueEnqueue, _queueDequeue]),
+      ],
+    );
+  }
+
+  Widget _linkedListControls() {
+    return Column(
+      children: [
+        _doubleInput('Value', 'Index'),
+        _wrapButtons([
+          'Add Node',
+          'Delete Last',
+          'Insert At',
+          'Delete At'
+        ], [
+          _linkedListAdd,
+          _linkedListDelete,
+          () => _linkedListInsertAt(
+              int.parse(_indexController.text), _inputController.text),
+          () => _linkedListDeleteAt(int.parse(_indexController.text)),
+        ]),
       ],
     );
   }
