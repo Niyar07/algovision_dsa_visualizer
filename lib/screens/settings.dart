@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -6,7 +7,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _darkMode = false;
+  bool _darkMode =
+      SchedulerBinding.instance.platformDispatcher.platformBrightness ==
+          Brightness.dark;
   bool _notifications = true;
 
   @override
@@ -20,7 +23,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             value: _darkMode,
             onChanged: (value) {
               setState(() => _darkMode = value);
-              // Apply dark mode (implement theme switch if needed)
+              final themeMode = value ? ThemeMode.dark : ThemeMode.light;
+              final appState =
+                  context.findAncestorStateOfType<_ThemeWrapperState>();
+              appState?.updateTheme(themeMode);
             },
           ),
           SwitchListTile(
@@ -32,7 +38,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Text("Change Password"),
             trailing: Icon(Icons.lock),
             onTap: () {
-              // Navigate to password change screen (not implemented here)
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text("Change Password"),
+                  content: Text("Password change feature not implemented."),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("OK"),
+                    )
+                  ],
+                ),
+              );
             },
           ),
           ListTile(
@@ -44,6 +62,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Wrapper widget to handle theme switching globally
+class ThemeWrapper extends StatefulWidget {
+  final Widget child;
+  ThemeWrapper({required this.child});
+
+  @override
+  _ThemeWrapperState createState() => _ThemeWrapperState();
+}
+
+class _ThemeWrapperState extends State<ThemeWrapper> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  void updateTheme(ThemeMode mode) {
+    setState(() => _themeMode = mode);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: widget.child,
     );
   }
 }
