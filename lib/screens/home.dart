@@ -40,10 +40,10 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: GridView.count(
-        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
-        padding: const EdgeInsets.all(16.0),
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 1,
+        padding: const EdgeInsets.all(60.0),
+        crossAxisSpacing: 30,
+        mainAxisSpacing: 30,
         children: options.map((option) => _buildCard(context, option)).toList(),
       ),
     );
