@@ -74,7 +74,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
   );
 
   List<BarData> numbers = [];
-  int sampleSize = 10; // Reduced for better visualization
+  int sampleSize = 10;
   bool isSorting = false;
   double sortingSpeed = 150.0;
   int comparisons = 0;
@@ -141,7 +141,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
       numbers = List.generate(
           sampleSize,
           (index) => BarData(
-                value: rng.nextInt(150) + 30, // Better range for visualization
+                value: rng.nextInt(150) + 30,
                 index: index,
                 isHighlighted: false,
                 isSorted: false,
@@ -157,14 +157,12 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
     final parsed =
         parts.map((e) => int.tryParse(e.trim())).whereType<int>().toList();
     if (parsed.isNotEmpty && parsed.length <= 20) {
-      // Limit for better visualization
       setState(() {
         numbers = parsed
             .asMap()
             .entries
             .map((entry) => BarData(
-                  value: entry.value
-                      .clamp(10, 200), // Clamp values for better display
+                  value: entry.value.clamp(10, 200),
                   index: entry.key,
                   isHighlighted: false,
                   isSorted: false,
@@ -209,7 +207,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
     await Future.delayed(Duration(milliseconds: sortingSpeed.round()));
   }
 
-  // Sorting algorithms (keeping the same logic)
+  // All Sorting Algorithms Implementation
   Future<void> bubbleSort() async {
     setState(() {
       isSorting = true;
@@ -218,6 +216,8 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
 
     for (int i = 0; i < numbers.length - 1; i++) {
       for (int j = 0; j < numbers.length - i - 1; j++) {
+        if (!isSorting) return; // Allow stopping
+
         setState(() {
           currentStep++;
           currentOperation = 'Comparing positions $j and ${j + 1}';
@@ -250,7 +250,6 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
     });
   }
 
-  // Add other sorting methods here (same logic as before)
   Future<void> selectionSort() async {
     setState(() {
       isSorting = true;
@@ -258,12 +257,16 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
     });
 
     for (int i = 0; i < numbers.length; i++) {
+      if (!isSorting) return;
+
       int minIndex = i;
       setState(() {
         currentOperation = 'Finding minimum from position $i';
       });
 
       for (int j = i + 1; j < numbers.length; j++) {
+        if (!isSorting) return;
+
         setState(() {
           currentStep++;
         });
@@ -300,6 +303,175 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
     });
   }
 
+  Future<void> insertionSort() async {
+    setState(() {
+      isSorting = true;
+      currentOperation = 'Starting Insertion Sort...';
+    });
+
+    _markSorted(0); // First element is considered sorted
+
+    for (int i = 1; i < numbers.length; i++) {
+      if (!isSorting) return;
+
+      int key = numbers[i].value;
+      int j = i - 1;
+
+      setState(() {
+        currentOperation = 'Inserting ${numbers[i].value} into sorted portion';
+      });
+
+      while (j >= 0 && numbers[j].value > key && isSorting) {
+        setState(() {
+          currentStep++;
+        });
+        _highlightComparison(j, j + 1);
+        await _delay();
+
+        numbers[j + 1].value = numbers[j].value;
+        j = j - 1;
+        setState(() {
+          swaps++;
+        });
+        await _delay();
+      }
+
+      numbers[j + 1].value = key;
+      _markSorted(i);
+      await _delay();
+    }
+
+    _clearHighlight();
+    setState(() {
+      isSorting = false;
+      currentOperation = 'Insertion Sort completed! ✅';
+    });
+  }
+
+  Future<void> mergeSort(int left, int right) async {
+    if (!isSorting) return;
+
+    if (left < right) {
+      int mid = (left + right) ~/ 2;
+
+      setState(() {
+        currentOperation =
+            'Dividing array: [$left-$mid] and [${mid + 1}-$right]';
+      });
+      await _delay();
+
+      await mergeSort(left, mid);
+      await mergeSort(mid + 1, right);
+      await merge(left, mid, right);
+    }
+  }
+
+  Future<void> merge(int left, int mid, int right) async {
+    if (!isSorting) return;
+
+    List<int> leftArray =
+        numbers.sublist(left, mid + 1).map((e) => e.value).toList();
+    List<int> rightArray =
+        numbers.sublist(mid + 1, right + 1).map((e) => e.value).toList();
+    int i = 0, j = 0, k = left;
+
+    setState(() {
+      currentOperation = 'Merging subarrays...';
+    });
+
+    while (i < leftArray.length && j < rightArray.length && isSorting) {
+      setState(() {
+        currentStep++;
+        comparisons++;
+      });
+
+      if (leftArray[i] <= rightArray[j]) {
+        numbers[k].value = leftArray[i++];
+      } else {
+        numbers[k].value = rightArray[j++];
+      }
+
+      _highlightComparison(k, k);
+      k++;
+      await _delay();
+    }
+
+    while (i < leftArray.length && isSorting) {
+      numbers[k].value = leftArray[i++];
+      k++;
+      await _delay();
+    }
+
+    while (j < rightArray.length && isSorting) {
+      numbers[k].value = rightArray[j++];
+      k++;
+      await _delay();
+    }
+
+    // Mark merged section as sorted
+    for (int idx = left; idx <= right && isSorting; idx++) {
+      _markSorted(idx);
+    }
+  }
+
+  Future<void> quickSort(int low, int high) async {
+    if (!isSorting) return;
+
+    if (low < high) {
+      setState(() {
+        currentOperation = 'Partitioning array around pivot';
+      });
+
+      int pi = await partition(low, high);
+      await quickSort(low, pi - 1);
+      await quickSort(pi + 1, high);
+    }
+  }
+
+  Future<int> partition(int low, int high) async {
+    if (!isSorting) return low;
+
+    int pivot = numbers[high].value;
+    int i = low - 1;
+
+    setState(() {
+      currentOperation = 'Pivot selected: $pivot';
+    });
+
+    for (int j = low; j < high && isSorting; j++) {
+      setState(() {
+        currentStep++;
+      });
+      _highlightComparison(j, high);
+      await _delay();
+
+      if (numbers[j].value <= pivot) {
+        i++;
+        if (i != j) {
+          final temp = numbers[i].value;
+          numbers[i].value = numbers[j].value;
+          numbers[j].value = temp;
+          setState(() {
+            swaps++;
+          });
+        }
+        await _delay();
+      }
+    }
+
+    final temp = numbers[i + 1].value;
+    numbers[i + 1].value = numbers[high].value;
+    numbers[high].value = temp;
+    setState(() {
+      swaps++;
+    });
+
+    _markSorted(i + 1);
+    await _delay();
+    return i + 1;
+  }
+
+  // Fixed runAlgorithm method with all algorithms
   void runAlgorithm() {
     if (isSorting) return;
 
@@ -319,7 +491,35 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
       case 'Selection Sort':
         selectionSort();
         break;
-      // Add other cases
+      case 'Insertion Sort':
+        insertionSort();
+        break;
+      case 'Merge Sort':
+        setState(() => isSorting = true);
+        mergeSort(0, numbers.length - 1).then((_) {
+          if (mounted) {
+            setState(() {
+              isSorting = false;
+              currentOperation = 'Merge Sort completed! ✅';
+            });
+          }
+        });
+        break;
+      case 'Quick Sort':
+        setState(() => isSorting = true);
+        quickSort(0, numbers.length - 1).then((_) {
+          if (mounted) {
+            setState(() {
+              isSorting = false;
+              currentOperation = 'Quick Sort completed! ✅';
+            });
+          }
+        });
+        break;
+      default:
+        setState(() {
+          currentOperation = 'Algorithm not implemented yet';
+        });
     }
   }
 
@@ -341,10 +541,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
             position: _slideAnimation,
             child: Column(
               children: [
-                // Custom App Bar
                 _buildCustomAppBar(),
-
-                // Main Content - Scrollable
                 Expanded(
                   child: SingleChildScrollView(
                     physics: BouncingScrollPhysics(),
@@ -356,13 +553,11 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
                         _buildVisualizationCard(),
                         SizedBox(height: 16),
                         _buildStatsCard(),
-                        SizedBox(height: 100), // Space for bottom sheet
+                        SizedBox(height: 100),
                       ],
                     ),
                   ),
                 ),
-
-                // Bottom Controls Sheet
                 _buildBottomControls(),
               ],
             ),
@@ -598,7 +793,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
   Widget _buildVisualizationCard() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20),
-      height: 400, // Fixed height for proper visualization
+      height: 400,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -612,7 +807,6 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
       ),
       child: Column(
         children: [
-          // Header
           Container(
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -676,8 +870,6 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
               ],
             ),
           ),
-
-          // Visualization Area
           Expanded(
             child: numbers.isEmpty
                 ? _buildEmptyState()
@@ -853,7 +1045,6 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
           Container(
             margin: EdgeInsets.only(top: 12),
             width: 50,
@@ -863,7 +1054,6 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-
           Padding(
             padding: EdgeInsets.all(24),
             child: Column(
@@ -958,7 +1148,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
                       ),
                     ),
                     SizedBox(width: 12),
-                    ElevatedButton(
+                    ElevatedButton.icon(
                       onPressed: isSorting
                           ? null
                           : () {
@@ -978,13 +1168,16 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
                                 );
                               }
                             },
+                      icon: Icon(Icons.auto_awesome),
+                      label: Text('Generate'),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedAlgorithmInfo.color,
+                        foregroundColor: Colors.white,
                         padding:
                             EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: Text('Generate'),
                     ),
                   ],
                 ),
@@ -1010,15 +1203,18 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
                       ),
                     ),
                     SizedBox(width: 12),
-                    ElevatedButton(
+                    ElevatedButton.icon(
                       onPressed: isSorting ? null : generateFromCustomInput,
+                      icon: Icon(Icons.input_rounded),
+                      label: Text('Use'),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.tertiary,
+                        foregroundColor: Colors.white,
                         padding:
                             EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: Text('Use'),
                     ),
                   ],
                 ),
@@ -1054,7 +1250,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
 
                 SizedBox(height: 20),
 
-                // Action Buttons
+                // Action Buttons - FIXED SHUFFLE BUTTON
                 Row(
                   children: [
                     Expanded(
@@ -1073,7 +1269,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
                               ? Theme.of(context).colorScheme.error
                               : selectedAlgorithmInfo.color,
                           foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                         ),
@@ -1087,8 +1283,19 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
                               generateRandomData();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('🔀 Generated new random data'),
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.shuffle_rounded,
+                                          color: Colors.white),
+                                      SizedBox(width: 8),
+                                      Text('Generated new random data!'),
+                                    ],
+                                  ),
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.secondary,
                                   behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
                                 ),
                               );
                             },
@@ -1098,7 +1305,8 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen>
                         backgroundColor:
                             Theme.of(context).colorScheme.secondary,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 18, horizontal: 20),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16)),
                       ),
@@ -1169,16 +1377,15 @@ class PerfectBarChartPainter extends CustomPainter {
 
     final maxValue = values.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final barWidth = size.width / values.length;
-    final heightScale = (size.height - 80) / maxValue; // Leave space for labels
-    final barSpacing = barWidth * 0.1; // 10% spacing
-    final actualBarWidth = barWidth * 0.8; // 80% width for bars
+    final heightScale = (size.height - 80) / maxValue;
+    final barSpacing = barWidth * 0.1;
+    final actualBarWidth = barWidth * 0.8;
 
     for (int i = 0; i < values.length; i++) {
       final barHeight = values[i].value * heightScale;
       final x = i * barWidth + barSpacing / 2;
-      final y = size.height - barHeight - 50; // Leave space for bottom labels
+      final y = size.height - barHeight - 50;
 
-      // Determine bar color and create gradient
       Paint barPaint = Paint();
       List<Color> gradientColors;
 
@@ -1196,14 +1403,13 @@ class PerfectBarChartPainter extends CustomPainter {
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromLTWH(x, y, actualBarWidth, barHeight));
 
-      // Draw bar with perfect rounded corners
       final RRect barRect = RRect.fromRectAndRadius(
         Rect.fromLTWH(x, y, actualBarWidth, barHeight),
         Radius.circular(8),
       );
       canvas.drawRRect(barRect, barPaint);
 
-      // Draw value text inside bar (top)
+      // Value text inside bar
       final valueTextPainter = TextPainter(
         text: TextSpan(
           text: values[i].value.toString(),
@@ -1219,14 +1425,13 @@ class PerfectBarChartPainter extends CustomPainter {
 
       valueTextPainter.layout(minWidth: actualBarWidth);
       final valueTextX = x + (actualBarWidth - valueTextPainter.width) / 2;
-      final valueTextY = y + 12; // Inside the bar, near top
+      final valueTextY = y + 12;
 
-      // Only draw value text if bar is tall enough
       if (barHeight > 30) {
         valueTextPainter.paint(canvas, Offset(valueTextX, valueTextY));
       }
 
-      // Draw index at bottom
+      // Index at bottom
       final indexTextPainter = TextPainter(
         text: TextSpan(
           text: i.toString(),
@@ -1242,9 +1447,8 @@ class PerfectBarChartPainter extends CustomPainter {
 
       indexTextPainter.layout(minWidth: actualBarWidth);
       final indexTextX = x + (actualBarWidth - indexTextPainter.width) / 2;
-      final indexTextY = size.height - 35; // Bottom position
+      final indexTextY = size.height - 35;
 
-      // Draw background circle for index
       final indexBgPaint = Paint()
         ..color = colorScheme.surface
         ..style = PaintingStyle.fill;
@@ -1258,7 +1462,7 @@ class PerfectBarChartPainter extends CustomPainter {
 
       indexTextPainter.paint(canvas, Offset(indexTextX, indexTextY));
 
-      // Draw status indicator (small dot above bar)
+      // Status indicator
       Paint dotPaint = Paint();
       if (sortedIndices.contains(i)) {
         dotPaint.color = Colors.green;
@@ -1275,7 +1479,6 @@ class PerfectBarChartPainter extends CustomPainter {
       );
     }
 
-    // Draw legend
     _drawLegend(canvas, size);
   }
 
@@ -1290,11 +1493,9 @@ class PerfectBarChartPainter extends CustomPainter {
     double legendX = 10;
 
     for (var item in legendItems) {
-      // Draw color indicator
       final colorPaint = Paint()..color = item['color'] as Color;
       canvas.drawCircle(Offset(legendX + 6, legendY + 6), 6, colorPaint);
 
-      // Draw text
       final textPainter = TextPainter(
         text: TextSpan(
           text: item['text'] as String,
