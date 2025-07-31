@@ -14,7 +14,12 @@ class DataStructureDetailScreen extends StatefulWidget {
       _DataStructureDetailScreenState();
 }
 
-class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
+class _DataStructureDetailScreenState extends State<DataStructureDetailScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   final List<String> structures = [
     'Array',
     'Stack',
@@ -48,6 +53,42 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
   String result = '';
   String treeTraversalResult = '';
 
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _valueController.dispose();
+    _indexController.dispose();
+    _keyController.dispose();
+    super.dispose();
+  }
+
   void _clearControllers() {
     _valueController.clear();
     _indexController.clear();
@@ -67,6 +108,23 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
       result = '';
       treeTraversalResult = '';
     });
+
+    // Show feedback with animation
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.cleaning_services, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text('All data cleared successfully!'),
+          ],
+        ),
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   // Array Operations
@@ -218,9 +276,9 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
 
   void _preOrderTraversal(TreeNode? node, List<String> result) {
     if (node == null) return;
-    result.add(node.value); // Visit root first
-    _preOrderTraversal(node.left, result); // Then left subtree
-    _preOrderTraversal(node.right, result); // Then right subtree
+    result.add(node.value);
+    _preOrderTraversal(node.left, result);
+    _preOrderTraversal(node.right, result);
   }
 
   void _treePostOrder() {
@@ -234,9 +292,9 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
 
   void _postOrderTraversal(TreeNode? node, List<String> result) {
     if (node == null) return;
-    _postOrderTraversal(node.left, result); // Visit left subtree first
-    _postOrderTraversal(node.right, result); // Then right subtree
-    result.add(node.value); // Finally visit root
+    _postOrderTraversal(node.left, result);
+    _postOrderTraversal(node.right, result);
+    result.add(node.value);
   }
 
   void _treeLevelOrder() {
@@ -250,14 +308,10 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
 
   void _levelOrderTraversal(List<String> result) {
     if (root == null) return;
-
-    List<TreeNode> queue = [root!]; // Use a queue for level-order traversal
-
+    List<TreeNode> queue = [root!];
     while (queue.isNotEmpty) {
-      TreeNode currentNode = queue.removeAt(0); // Dequeue
-      result.add(currentNode.value); // Visit current node
-
-      // Add children to queue
+      TreeNode currentNode = queue.removeAt(0);
+      result.add(currentNode.value);
       if (currentNode.left != null) queue.add(currentNode.left!);
       if (currentNode.right != null) queue.add(currentNode.right!);
     }
@@ -369,7 +423,6 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
       }
 
       if (swapIndex == index) break;
-
       _swap(heap, index, swapIndex);
       index = swapIndex;
     }
@@ -381,8 +434,128 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
     list[j] = temp;
   }
 
-  // Visualizer Widgets
+  // Enhanced Icon for each data structure
+  IconData _getStructureIcon(String structure) {
+    switch (structure) {
+      case 'Array':
+        return Icons.view_list_outlined;
+      case 'Stack':
+        return Icons.layers_outlined;
+      case 'Queue':
+        return Icons.queue_outlined;
+      case 'Linked List':
+        return Icons.link_outlined;
+      case 'Tree':
+        return Icons.account_tree_outlined;
+      case 'Graph':
+        return Icons.hub_outlined;
+      case 'Hash Table':
+        return Icons.table_chart_outlined;
+      case 'Heap':
+        return Icons.trending_up_outlined;
+      default:
+        return Icons.data_usage_outlined;
+    }
+  }
+
+  // Enhanced Visualizer Widgets
   Widget _buildVisualizer() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Container(
+          margin: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
+                blurRadius: 15,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Column(
+              children: [
+                // Header with icon and title
+                Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _getStructureIcon(selectedStructure),
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          '$selectedStructure Visualizer',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (result.isNotEmpty)
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Updated',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Visualization content
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(20),
+                    child: _buildVisualizationContent(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisualizationContent() {
     switch (selectedStructure) {
       case 'Array':
         return _buildListVisualizer(array, 'Array', horizontal: true);
@@ -408,92 +581,216 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
 
   Widget _buildListVisualizer(List<String> items, String type,
       {bool reverse = false, bool horizontal = false, bool arrow = false}) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: EdgeInsets.all(16),
-        child: items.isEmpty
-            ? Center(
-                child: Text('$type is empty',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600])))
-            : horizontal
-                ? SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _buildItemBoxes(items, arrow),
-                    ),
-                  )
-                : ListView(
-                    reverse: reverse,
-                    children: _buildItemBoxes(items, arrow),
+    if (items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getStructureIcon(type),
+                size: 48,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              '$type is empty',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
                   ),
-      ),
-    );
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Add some elements to see the visualization',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.5),
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return horizontal
+        ? SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _buildItemBoxes(items, arrow),
+            ),
+          )
+        : ListView(
+            reverse: reverse,
+            children: _buildItemBoxes(items, arrow),
+          );
   }
 
   List<Widget> _buildItemBoxes(List<String> items, bool arrow) {
     List<Widget> widgets = [];
     for (int i = 0; i < items.length; i++) {
-      widgets.add(Container(
-        margin: EdgeInsets.all(4),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.blue[100],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue[300]!),
+      widgets.add(
+        AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          margin: EdgeInsets.all(6),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primaryContainer,
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                items[i],
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+              SizedBox(height: 4),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '[$i]',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(items[i],
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            Text('[$i]',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          ],
-        ),
-      ));
+      );
+
       if (arrow && i != items.length - 1) {
-        widgets.add(Icon(Icons.arrow_forward, color: Colors.blue[600]));
+        widgets.add(
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 8),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 24,
+            ),
+          ),
+        );
       }
     }
     return widgets;
   }
 
   Widget _buildTreeVisualizer() {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            if (treeTraversalResult.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(8),
-                margin: EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(treeTraversalResult, textAlign: TextAlign.center),
+    return Column(
+      children: [
+        if (treeTraversalResult.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16),
+            margin: EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.secondaryContainer,
+                  Theme.of(context)
+                      .colorScheme
+                      .secondaryContainer
+                      .withOpacity(0.7),
+                ],
               ),
-            Expanded(
-              child: root == null
-                  ? Center(
-                      child: Text('Tree is empty',
-                          style:
-                              TextStyle(fontSize: 16, color: Colors.grey[600])))
-                  : SingleChildScrollView(child: _buildTreeNode(root)),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+              ),
             ),
-          ],
+            child: Text(
+              treeTraversalResult,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
+              ),
+            ),
+          ),
+        Expanded(
+          child: root == null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primaryContainer
+                              .withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.account_tree_outlined,
+                          size: 48,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.6),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Tree is empty',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.6),
+                                ),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(child: _buildTreeNode(root)),
         ),
-      ),
+      ],
     );
   }
 
@@ -504,16 +801,34 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue[300],
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
+              ),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.blue[700]!, width: 2),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
             child: Text(
               node.value,
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           if (node.left != null || node.right != null)
@@ -536,367 +851,802 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
   }
 
   Widget _buildGraphVisualizer() {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: EdgeInsets.all(16),
-        child: graph.isEmpty
-            ? Center(
-                child: Text('Graph is empty',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600])))
-            : ListView(
-                children: graph.entries
-                    .map((e) => Container(
-                          margin: EdgeInsets.symmetric(vertical: 4),
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: Text('${e.key} → [${e.value.join(', ')}]'),
-                        ))
-                    .toList(),
+    if (graph.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withOpacity(0.3),
+                shape: BoxShape.circle,
               ),
-      ),
+              child: Icon(
+                Icons.hub_outlined,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Graph is empty',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      children: graph.entries
+          .map((e) => Container(
+                margin: EdgeInsets.symmetric(vertical: 6),
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        e.key,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '[${e.value.join(', ')}]',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ))
+          .toList(),
     );
   }
 
   Widget _buildHashVisualizer() {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: EdgeInsets.all(16),
-        child: hashTable.isEmpty
-            ? Center(
-                child: Text('Hash Table is empty',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600])))
-            : ListView(
-                children: hashTable.entries
-                    .map((e) => Container(
-                          margin: EdgeInsets.symmetric(vertical: 4),
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                  child: Text('Key: ${e.key}',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w600))),
-                              Expanded(child: Text('Value: ${e.value}')),
-                            ],
-                          ),
-                        ))
-                    .toList(),
+    if (hashTable.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withOpacity(0.3),
+                shape: BoxShape.circle,
               ),
-      ),
+              child: Icon(
+                Icons.table_chart_outlined,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Hash Table is empty',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      children: hashTable.entries
+          .map((e) => Container(
+                margin: EdgeInsets.symmetric(vertical: 6),
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Key',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer
+                                    .withOpacity(0.7),
+                              ),
+                            ),
+                            Text(
+                              e.key,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Value',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer
+                                    .withOpacity(0.7),
+                              ),
+                            ),
+                            Text(
+                              e.value,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ))
+          .toList(),
     );
   }
 
   Widget _buildHeapVisualizer() {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: EdgeInsets.all(16),
-        child: heap.isEmpty
-            ? Center(
-                child: Text('Heap is empty',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600])))
-            : GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  childAspectRatio: 1.2,
-                ),
-                itemCount: heap.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: index == 0 ? Colors.red[200] : Colors.blue[100],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color:
-                            index == 0 ? Colors.red[400]! : Colors.blue[300]!,
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('${heap[index]}',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('[i:$index]',
-                            style: TextStyle(
-                                fontSize: 10, color: Colors.grey[600])),
-                      ],
-                    ),
-                  );
-                },
+    if (heap.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withOpacity(0.3),
+                shape: BoxShape.circle,
               ),
+              child: Icon(
+                Icons.trending_up_outlined,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Heap is empty',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        childAspectRatio: 1.0,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
       ),
+      itemCount: heap.length,
+      itemBuilder: (context, index) {
+        bool isRoot = index == 0;
+        return AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isRoot
+                  ? [
+                      Theme.of(context).colorScheme.error,
+                      Theme.of(context).colorScheme.error.withOpacity(0.7),
+                    ]
+                  : [
+                      Theme.of(context).colorScheme.primaryContainer,
+                      Theme.of(context)
+                          .colorScheme
+                          .primaryContainer
+                          .withOpacity(0.7),
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isRoot
+                  ? Theme.of(context).colorScheme.error.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isRoot
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.primary)
+                    .withOpacity(0.2),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${heap[index]}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isRoot
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+              SizedBox(height: 4),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: (isRoot
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary)
+                      .withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '[i:$index]',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isRoot
+                        ? Colors.white.withOpacity(0.8)
+                        : Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildControls() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
+            blurRadius: 15,
+            offset: Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          SizedBox(height: 20),
+          _buildControlsContent(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlsContent() {
     switch (selectedStructure) {
       case 'Array':
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                    child: TextField(
-                        controller: _valueController,
-                        decoration: InputDecoration(
-                            labelText: 'Value', border: OutlineInputBorder()))),
-                SizedBox(width: 8),
-                Expanded(
-                    child: TextField(
-                        controller: _indexController,
-                        decoration: InputDecoration(
-                            labelText: 'Index', border: OutlineInputBorder()),
-                        keyboardType: TextInputType.number)),
-              ],
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(onPressed: _arrayAdd, child: Text('Add')),
-                ElevatedButton(
-                    onPressed: _arrayInsertAt, child: Text('Insert At')),
-                ElevatedButton(
-                    onPressed: _arrayDeleteAt, child: Text('Delete At')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildArrayControls();
       case 'Stack':
-        return Column(
-          children: [
-            TextField(
-                controller: _valueController,
-                decoration: InputDecoration(
-                    labelText: 'Value', border: OutlineInputBorder())),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(onPressed: _stackPush, child: Text('Push')),
-                ElevatedButton(onPressed: _stackPop, child: Text('Pop')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildStackControls();
       case 'Queue':
-        return Column(
-          children: [
-            TextField(
-                controller: _valueController,
-                decoration: InputDecoration(
-                    labelText: 'Value', border: OutlineInputBorder())),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(
-                    onPressed: _queueEnqueue, child: Text('Enqueue')),
-                ElevatedButton(
-                    onPressed: _queueDequeue, child: Text('Dequeue')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildQueueControls();
       case 'Linked List':
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                    child: TextField(
-                        controller: _valueController,
-                        decoration: InputDecoration(
-                            labelText: 'Value', border: OutlineInputBorder()))),
-                SizedBox(width: 8),
-                Expanded(
-                    child: TextField(
-                        controller: _indexController,
-                        decoration: InputDecoration(
-                            labelText: 'Index', border: OutlineInputBorder()),
-                        keyboardType: TextInputType.number)),
-              ],
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(onPressed: _linkedListAdd, child: Text('Add')),
-                ElevatedButton(
-                    onPressed: _linkedListInsertAt, child: Text('Insert At')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildLinkedListControls();
       case 'Tree':
-        return Column(
-          children: [
-            TextField(
-                controller: _valueController,
-                decoration: InputDecoration(
-                    labelText: 'Value', border: OutlineInputBorder())),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(
-                    onPressed: _treeInOrder, child: Text('In-Order')),
-                ElevatedButton(
-                    onPressed: _treePreOrder, child: Text('Pre-Order')),
-                ElevatedButton(
-                    onPressed: _treePostOrder, child: Text('Post-Order')),
-                ElevatedButton(
-                    onPressed: _treeLevelOrder, child: Text('Level-Order')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildTreeControls();
       case 'Graph':
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                    child: TextField(
-                        controller: _valueController,
-                        decoration: InputDecoration(
-                            labelText: 'From Node',
-                            border: OutlineInputBorder()))),
-                SizedBox(width: 8),
-                Expanded(
-                    child: TextField(
-                        controller: _indexController,
-                        decoration: InputDecoration(
-                            labelText: 'To Node',
-                            border: OutlineInputBorder()))),
-              ],
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(
-                    onPressed: _graphAddNode, child: Text('Add Node')),
-                ElevatedButton(
-                    onPressed: _graphAddEdge, child: Text('Add Edge')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildGraphControls();
       case 'Hash Table':
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                    child: TextField(
-                        controller: _valueController,
-                        decoration: InputDecoration(
-                            labelText: 'Key', border: OutlineInputBorder()))),
-                SizedBox(width: 8),
-                Expanded(
-                    child: TextField(
-                        controller: _indexController,
-                        decoration: InputDecoration(
-                            labelText: 'Value', border: OutlineInputBorder()))),
-              ],
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(onPressed: _hashInsert, child: Text('Insert')),
-                ElevatedButton(onPressed: _hashDelete, child: Text('Delete')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildHashControls();
       case 'Heap':
-        return Column(
-          children: [
-            SwitchListTile(
-              value: isMinHeap,
-              onChanged: (v) => setState(() => isMinHeap = v),
-              title: Text('Min Heap (unchecked = Max Heap)'),
-            ),
-            TextField(
-                controller: _valueController,
-                decoration: InputDecoration(
-                    labelText: 'Value (numbers only)',
-                    border: OutlineInputBorder()),
-                keyboardType: TextInputType.number),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                ElevatedButton(onPressed: _heapInsert, child: Text('Insert')),
-                ElevatedButton(
-                    onPressed: _heapDeleteRoot, child: Text('Delete Root')),
-                ElevatedButton(onPressed: _clearAll, child: Text('Clear')),
-              ],
-            ),
-          ],
-        );
+        return _buildHeapControls();
       default:
         return SizedBox();
     }
   }
 
+  Widget _buildArrayControls() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _valueController,
+                label: 'Value',
+                icon: Icons.text_fields,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _indexController,
+                label: 'Index',
+                icon: Icons.numbers,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Add', Icons.add, _arrayAdd,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Insert At', Icons.insert_drive_file, _arrayInsertAt,
+              Theme.of(context).colorScheme.secondary),
+          _ActionButton('Delete At', Icons.delete, _arrayDeleteAt,
+              Theme.of(context).colorScheme.error),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildStackControls() {
+    return Column(
+      children: [
+        _buildStyledTextField(
+          controller: _valueController,
+          label: 'Value',
+          icon: Icons.layers,
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Push', Icons.arrow_upward, _stackPush,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Pop', Icons.arrow_downward, _stackPop,
+              Theme.of(context).colorScheme.secondary),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildQueueControls() {
+    return Column(
+      children: [
+        _buildStyledTextField(
+          controller: _valueController,
+          label: 'Value',
+          icon: Icons.queue,
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Enqueue', Icons.arrow_forward, _queueEnqueue,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Dequeue', Icons.arrow_back, _queueDequeue,
+              Theme.of(context).colorScheme.secondary),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildLinkedListControls() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _valueController,
+                label: 'Value',
+                icon: Icons.link,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _indexController,
+                label: 'Index',
+                icon: Icons.numbers,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Add', Icons.add, _linkedListAdd,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Insert At', Icons.insert_drive_file,
+              _linkedListInsertAt, Theme.of(context).colorScheme.secondary),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildTreeControls() {
+    return Column(
+      children: [
+        _buildStyledTextField(
+          controller: _valueController,
+          label: 'Tree Value',
+          icon: Icons.account_tree,
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Insert', Icons.add, _treeInsert,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+        SizedBox(height: 16),
+        Text(
+          'Traversals',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+        ),
+        SizedBox(height: 12),
+        _buildActionButtons([
+          _ActionButton('In-Order', Icons.sort, _treeInOrder,
+              Theme.of(context).colorScheme.tertiary),
+          _ActionButton('Pre-Order', Icons.first_page, _treePreOrder,
+              Theme.of(context).colorScheme.tertiary),
+          _ActionButton('Post-Order', Icons.last_page, _treePostOrder,
+              Theme.of(context).colorScheme.tertiary),
+          _ActionButton('Level-Order', Icons.layers, _treeLevelOrder,
+              Theme.of(context).colorScheme.tertiary),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildGraphControls() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _valueController,
+                label: 'From Node',
+                icon: Icons.hub,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _indexController,
+                label: 'To Node',
+                icon: Icons.place,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Add Node', Icons.add_circle, _graphAddNode,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Add Edge', Icons.add_link, _graphAddEdge,
+              Theme.of(context).colorScheme.secondary),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildHashControls() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _valueController,
+                label: 'Key',
+                icon: Icons.vpn_key,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _buildStyledTextField(
+                controller: _indexController,
+                label: 'Value',
+                icon: Icons.data_object,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Insert', Icons.add, _hashInsert,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Delete', Icons.delete, _hashDelete,
+              Theme.of(context).colorScheme.error),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildHeapControls() {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color:
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: SwitchListTile(
+            value: isMinHeap,
+            onChanged: (v) => setState(() => isMinHeap = v),
+            title: Text(
+              'Min Heap',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            subtitle: Text(
+              isMinHeap ? 'Currently: Min Heap' : 'Currently: Max Heap',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            activeColor: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        SizedBox(height: 16),
+        _buildStyledTextField(
+          controller: _valueController,
+          label: 'Value (numbers only)',
+          icon: Icons.trending_up,
+          keyboardType: TextInputType.number,
+        ),
+        SizedBox(height: 16),
+        _buildActionButtons([
+          _ActionButton('Insert', Icons.add, _heapInsert,
+              Theme.of(context).colorScheme.primary),
+          _ActionButton('Delete Root', Icons.remove_circle, _heapDeleteRoot,
+              Theme.of(context).colorScheme.error),
+          _ActionButton('Clear', Icons.clear_all, _clearAll,
+              Theme.of(context).colorScheme.outline),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildStyledTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 2,
+          ),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(List<_ActionButton> buttons) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: buttons
+          .map((button) => ElevatedButton.icon(
+                onPressed: button.onPressed,
+                icon: Icon(button.icon, size: 18),
+                label: Text(button.label),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: button.color,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+              ))
+          .toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        title: Text('Data Structure Visualizer'),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
+        title: Text(
+          'Data Structure Visualizer',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        elevation: 0,
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          ),
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Dropdown Selection
+            // Enhanced Dropdown Selection
             Container(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
-                border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+                color: Theme.of(context).colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        Theme.of(context).colorScheme.shadow.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
-              child: DropdownButton<String>(
+              child: DropdownButtonFormField<String>(
                 value: selectedStructure,
-                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: 'Select Data Structure',
+                  prefixIcon: Icon(_getStructureIcon(selectedStructure)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                ),
                 items: structures
                     .map((str) => DropdownMenuItem(
-                        value: str,
-                        child: Text(str, style: TextStyle(fontSize: 16))))
+                          value: str,
+                          child: Row(
+                            children: [
+                              Icon(_getStructureIcon(str), size: 20),
+                              SizedBox(width: 12),
+                              Text(str, style: TextStyle(fontSize: 16)),
+                            ],
+                          ),
+                        ))
                     .toList(),
                 onChanged: (val) => setState(() {
                   selectedStructure = val!;
@@ -911,34 +1661,77 @@ class _DataStructureDetailScreenState extends State<DataStructureDetailScreen> {
             if (result.isNotEmpty)
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(12),
                 margin: EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green[200]!),
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.secondaryContainer,
+                      Theme.of(context)
+                          .colorScheme
+                          .secondaryContainer
+                          .withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withOpacity(0.3),
+                  ),
                 ),
-                child: Text(result,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    textAlign: TextAlign.center),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .secondary
+                            .withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.info_outline,
+                        color: Theme.of(context).colorScheme.secondary,
+                        size: 20,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        result,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-            // Visualizer
-            Expanded(
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
-                child: _buildVisualizer(),
-              ),
-            ),
+            // Enhanced Visualizer
+            Expanded(child: _buildVisualizer()),
 
-            // Controls
-            Container(
-              padding: EdgeInsets.all(16),
-              child: _buildControls(),
-            ),
+            // Enhanced Controls
+            _buildControls(),
           ],
         ),
       ),
     );
   }
+}
+
+class _ActionButton {
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color color;
+
+  _ActionButton(this.label, this.icon, this.onPressed, this.color);
 }
